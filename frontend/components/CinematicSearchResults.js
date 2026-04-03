@@ -1,134 +1,48 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/router'
-import Hero3D from './Hero3D'
 import InteractiveTimeline from './InteractiveTimeline'
-import {
-  HolographicLoader,
-  SearchResultsSkeleton,
-  ErrorDisplay,
-  FloatingParticles
-} from './LoadingComponents'
-import {
-  ClockIcon,
-  BookOpenIcon,
-  GlobeAltIcon,
-  PlayIcon,
-  PhotoIcon,
-  DocumentTextIcon,
-  CalendarIcon,
-  UserIcon,
-  ArrowLeftIcon
-} from '@heroicons/react/24/outline'
 
-// Article Card Component (Refined)
-const ArticleCard = ({ article, index }) => {
-  return (
-    <motion.article
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      whileHover={{ y: -5 }}
-      className="bg-dark-800/80 backdrop-blur-xl rounded-2xl p-6 border border-dark-700 hover:border-cyber-blue/50 transition-all group flex flex-col h-full"
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className="p-2.5 rounded-xl bg-cyber-blue/10 text-cyber-blue group-hover:bg-cyber-blue group-hover:text-white transition-all">
-          <BookOpenIcon className="w-5 h-5" />
-        </div>
-        <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold px-2 py-1 bg-dark-700 rounded-md">
-          {article.category || 'Reference'}
-        </span>
-      </div>
-
-      <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
-        {article.title}
-      </h3>
-
-      <p className="text-gray-400 text-sm leading-relaxed mb-6 line-clamp-3">
-        {article.description || "Detailed historical context and analysis of this topic."}
-      </p>
-
-      <div className="mt-auto pt-4 border-t border-dark-700 flex items-center justify-between">
-        <a
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs font-bold text-cyber-blue flex items-center group-hover:gap-2 transition-all"
-        >
-          READ FULL ARTICLE <span className="ml-1">→</span>
-        </a>
-      </div>
-    </motion.article>
-  )
+const TOKEN = {
+  fontFamily: "'Space Mono', monospace",
+  fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
 }
 
-// Media Gallery Component (Refined)
+const SectionHeader = ({ glyph, label }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+    <span style={{ fontSize: '1.2rem', opacity: 0.6 }}>{glyph}</span>
+    <span style={{ ...TOKEN, color: 'rgba(200,160,80,0.6)' }}>{label}</span>
+    <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(200,160,80,0.15), transparent)' }} />
+  </div>
+)
+
 const MediaGallery = ({ media = [] }) => {
-  const [selectedMedia, setSelectedMedia] = useState(null)
-
-  if (!media || media.length === 0) return null;
-
+  const [selected, setSelected] = useState(null)
+  if (!media.length) return null
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {media.map((item, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.05 }}
-            whileHover={{ scale: 1.05 }}
-            className="group relative aspect-square rounded-2xl overflow-hidden cursor-zoom-in bg-dark-800"
-            onClick={() => setSelectedMedia(item)}
-          >
-            <img
-              src={item.url}
-              alt={item.title}
-              className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-500 transform group-hover:scale-110"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
-              <p className="text-xs font-bold text-white truncate">{item.title}</p>
-              <p className="text-[10px] text-cyber-blue truncate">{item.credit || 'Wikimedia'}</p>
-            </div>
-          </motion.div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px,1fr))', gap: '0.75rem' }}>
+        {media.map((item, i) => (
+          <div key={i} onClick={() => setSelected(item)} style={{ position: 'relative', aspectRatio: '1', borderRadius: '3px', overflow: 'hidden', cursor: 'zoom-in', border: '1px solid rgba(200,160,80,0.08)', background: '#0c0b14' }}>
+            <img src={item.url} alt={item.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7, transition: 'opacity 0.2s, transform 0.3s' }}
+              onMouseOver={e => { e.target.style.opacity = 1; e.target.style.transform = 'scale(1.05)' }}
+              onMouseOut={e => { e.target.style.opacity = 0.7; e.target.style.transform = 'scale(1)' }} />
+          </div>
         ))}
       </div>
 
       <AnimatePresence>
-        {selectedMedia && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-dark-950/95 backdrop-blur-xl flex items-center justify-center p-4 sm:p-8"
-            onClick={() => setSelectedMedia(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative max-w-5xl w-full bg-dark-900 rounded-3xl overflow-hidden shadow-2xl border border-dark-700"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setSelectedMedia(null)}
-                className="absolute top-4 right-4 z-10 p-2 bg-dark-800 rounded-full text-white hover:bg-dark-700 transition-all"
-              >
-                ✕
-              </button>
-              <img
-                src={selectedMedia.url}
-                alt={selectedMedia.title}
-                className="w-full h-auto max-h-[75vh] object-contain bg-black"
-              />
-              <div className="p-8 space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-2xl font-bold text-white">{selectedMedia.title}</h3>
-                  <span className="px-3 py-1 bg-dark-700 rounded-lg text-xs font-bold text-cyber-blue">{selectedMedia.type}</span>
-                </div>
-                <p className="text-gray-400 text-sm leading-relaxed">{selectedMedia.description}</p>
-                <p className="text-[10px] text-gray-600 uppercase tracking-widest pt-4">Source: {selectedMedia.source} • {selectedMedia.credit}</p>
+        {selected && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setSelected(null)}
+            style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+            <motion.div initial={{ scale: 0.92 }} animate={{ scale: 1 }} exit={{ scale: 0.92 }}
+              onClick={e => e.stopPropagation()}
+              style={{ maxWidth: '900px', width: '100%', border: '1px solid rgba(200,160,80,0.15)', borderRadius: '4px', overflow: 'hidden', background: '#05040a' }}>
+              <img src={selected.url} alt={selected.title} style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', background: '#000' }} />
+              <div style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid rgba(200,160,80,0.1)' }}>
+                <div style={{ fontSize: '0.9rem', fontFamily: "'Playfair Display',serif", fontWeight: 600, color: '#f5e8c8', marginBottom: '4px' }}>{selected.title}</div>
+                <div style={{ ...TOKEN, color: 'rgba(200,160,80,0.4)' }}>{selected.source} · {selected.credit}</div>
               </div>
             </motion.div>
           </motion.div>
@@ -141,136 +55,114 @@ const MediaGallery = ({ media = [] }) => {
 const CinematicSearchResults = ({ query, searchData, isLoading, error, onRetry }) => {
   const router = useRouter()
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-6 py-12">
-        <HolographicLoader message={`Tapping into the historical records for ${query}...`} />
-        <div className="mt-12 opacity-50"><SearchResultsSkeleton /></div>
+  if (isLoading) return (
+    <div style={{ padding: '6rem 3rem', textAlign: 'center', fontFamily: "'Playfair Display',serif" }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          {[0,1,2,3].map(i => (
+            <motion.div key={i} animate={{ scaleY: [0.4,1,0.4], opacity: [0.3,1,0.3] }}
+              transition={{ duration: 1, repeat: Infinity, delay: i*0.15 }}
+              style={{ width: '3px', height: '28px', background: 'rgba(200,160,80,0.6)', borderRadius: '2px' }} />
+          ))}
+        </div>
+        <p style={{ ...TOKEN, color: 'rgba(200,160,80,0.4)' }}>Searching the archive for {query}</p>
       </div>
-    )
-  }
+    </div>
+  )
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-6 py-24 flex items-center justify-center">
-        <ErrorDisplay
-          title="Archive Access Denied"
-          message={error.message || "The historical records are currently unreachable. Check your uplink."}
-          onRetry={onRetry}
-        />
-      </div>
-    )
-  }
+  if (error) return (
+    <div style={{ padding: '6rem 3rem', textAlign: 'center', fontFamily: "'Playfair Display',serif" }}>
+      <div style={{ fontSize: '2rem', marginBottom: '1rem', opacity: 0.3 }}>𓂀</div>
+      <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.75rem', color: '#f5e8c8' }}>Archive Unreachable</h3>
+      <p style={{ color: 'rgba(245,232,200,0.4)', fontStyle: 'italic', marginBottom: '2rem', fontSize: '0.9rem' }}>{error.message || 'The historical records are temporarily unavailable.'}</p>
+      <button onClick={onRetry} style={{ ...TOKEN, padding: '0.7rem 1.5rem', background: 'rgba(200,160,80,0.08)', border: '1px solid rgba(200,160,80,0.3)', borderRadius: '3px', color: '#ffd080', cursor: 'pointer' }}>
+        Retry
+      </button>
+    </div>
+  )
 
   if (!searchData) return null
 
-  const { biography, timeline, related_articles, media, model_3d_available, model_3d_url } = searchData
+  const { biography, timeline, related_articles, media } = searchData
 
   return (
-    <div className="relative pb-32">
-      <div className="container mx-auto px-4 sm:px-6 space-y-16">
-        {/* Context Hero */}
-        <motion.section
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative overflow-hidden rounded-[2.5rem] bg-dark-800 border border-dark-700 min-h-[500px] flex flex-col justify-end p-8 sm:p-16"
-        >
-          {/* 3D or Large Image Background could go here */}
-          {model_3d_available ? (
-            <div className="absolute inset-0 bg-black/40">
-              <iframe src={model_3d_url} className="w-full h-full border-0" allow="autoplay; fullscreen; xr-spatial-tracking" />
-            </div>
-          ) : (
-            <div className="absolute inset-0 opacity-20 hover:opacity-30 transition-opacity">
-              <img src={media?.[0]?.url} className="w-full h-full object-cover" />
+    <div style={{ fontFamily: "'Playfair Display',Georgia,serif", color: '#f5e8c8', padding: '2.5rem 3rem 5rem', maxWidth: '1280px', margin: '0 auto' }}>
+
+      {/* Hero */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+        style={{ position: 'relative', borderRadius: '4px', overflow: 'hidden', minHeight: '300px', marginBottom: '3rem', border: '1px solid rgba(200,160,80,0.12)' }}>
+
+        {media?.[0]?.url && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+            <img src={media[0].url} alt={query} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.15 }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(0,0,0,0.95) 40%, rgba(0,0,0,0.5))' }} />
+          </div>
+        )}
+        <div style={{ position: 'relative', zIndex: 1, padding: '3rem 3.5rem' }}>
+          <p style={{ ...TOKEN, color: 'rgba(200,160,80,0.5)', marginBottom: '1rem' }}>Archive Result</p>
+          <h1 style={{ fontSize: 'clamp(2rem,5vw,4rem)', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.05, marginBottom: '1.25rem' }}>{query}</h1>
+          {biography?.summary && (
+            <p style={{ fontSize: '1rem', color: 'rgba(245,232,200,0.55)', lineHeight: 1.8, maxWidth: '580px', fontStyle: 'italic' }}>{biography.summary}</p>
+          )}
+          {biography?.known_for?.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1.5rem' }}>
+              {biography.known_for.map((t,i) => (
+                <span key={i} style={{ padding: '0.35rem 0.875rem', background: 'rgba(200,160,80,0.06)', border: '1px solid rgba(200,160,80,0.18)', borderRadius: '2px', fontSize: '0.75rem', color: 'rgba(245,232,200,0.6)' }}>{t}</span>
+              ))}
             </div>
           )}
+        </div>
+      </motion.div>
 
-          <div className="relative z-10 max-w-4xl space-y-6">
-            <motion.div initial={{ x: -20 }} animate={{ x: 0 }} className="inline-flex items-center px-4 py-2 bg-cyber-blue/20 rounded-full border border-cyber-blue/30 backdrop-blur-md">
-              <GlobeAltIcon className="w-4 h-4 text-cyber-blue mr-2" />
-              <span className="text-xs font-black tracking-widest text-cyber-blue uppercase">Full Context Archived</span>
-            </motion.div>
-
-            <h1 className="text-5xl sm:text-7xl font-bold text-white tracking-tight">
-              {query}
-            </h1>
-
-            {biography && (
-              <p className="text-gray-300 text-lg sm:text-xl leading-relaxed max-w-2xl font-medium">
-                {biography.summary}
-              </p>
-            )}
-          </div>
-        </motion.section>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Main Content Column */}
-          <div className="lg:col-span-2 space-y-16">
-            {/* Timeline */}
-            <section className="space-y-8">
-              <div className="flex items-center space-x-4">
-                <ClockIcon className="w-6 h-6 text-cyber-purple" />
-                <h2 className="text-2xl font-bold text-white uppercase tracking-wider">Historical Continuity</h2>
-              </div>
-              <div className="bg-dark-800/40 rounded-3xl p-2">
+      {/* Body grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: related_articles?.length ? '1fr 300px' : '1fr', gap: '3rem', alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+          {/* Timeline */}
+          {timeline?.length > 0 && (
+            <section>
+              <SectionHeader glyph="𓇌" label="Historical Timeline" />
+              <div style={{ border: '1px solid rgba(200,160,80,0.1)', borderRadius: '4px', overflow: 'hidden', background: 'rgba(12,11,20,0.5)', padding: '1.5rem' }}>
                 <InteractiveTimeline events={timeline} />
               </div>
             </section>
+          )}
 
-            {/* Media */}
-            {media && media.length > 0 && (
-              <section className="space-y-8">
-                <div className="flex items-center space-x-4">
-                  <PhotoIcon className="w-6 h-6 text-cyber-pink" />
-                  <h2 className="text-2xl font-bold text-white uppercase tracking-wider">Visual Record</h2>
-                </div>
-                <MediaGallery media={media} />
-              </section>
-            )}
-          </div>
-
-          {/* Sidebar Column */}
-          <div className="space-y-12">
-            {/* Related Knowledge */}
-            <section className="space-y-6">
-              <div className="flex items-center space-x-4 px-2">
-                <BookOpenIcon className="w-5 h-5 text-cyber-blue" />
-                <h2 className="text-lg font-bold text-white uppercase tracking-widest">Cross References</h2>
-              </div>
-              <div className="space-y-4">
-                {related_articles && related_articles.map((article, idx) => (
-                  <ArticleCard key={idx} article={article} index={idx} />
-                ))}
-              </div>
+          {/* Media */}
+          {media?.length > 0 && (
+            <section>
+              <SectionHeader glyph="𓁼" label="Visual Record" />
+              <MediaGallery media={media} />
             </section>
+          )}
+        </div>
 
-            {/* Key Attributes */}
-            {biography?.known_for && (
-              <section className="bg-dark-800/80 rounded-3xl p-8 border border-dark-700 space-y-6">
-                <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest">Significance</h3>
-                <div className="flex flex-wrap gap-2">
-                  {biography.known_for.map((item, i) => (
-                    <span key={i} className="px-3 py-1.5 bg-dark-900 rounded-lg text-xs font-bold text-white border border-dark-600">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
+        {/* Sidebar */}
+        {related_articles?.length > 0 && (
+          <div>
+            <SectionHeader glyph="𓂻" label="Related Records" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {related_articles.map((a, i) => (
+                <a key={i} href={a.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                  <div style={{ padding: '1rem 1.25rem', border: '1px solid rgba(200,160,80,0.1)', borderRadius: '3px', background: 'rgba(12,11,20,0.5)', transition: 'all 0.18s', cursor: 'pointer' }}
+                    onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(200,160,80,0.35)'; e.currentTarget.style.background = 'rgba(200,160,80,0.05)' }}
+                    onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(200,160,80,0.1)'; e.currentTarget.style.background = 'rgba(12,11,20,0.5)' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f5e8c8', marginBottom: '4px', lineHeight: 1.4 }}>{a.title}</div>
+                    <div style={{ ...TOKEN, color: 'rgba(200,160,80,0.4)', marginBottom: '6px' }}>{a.category || 'Reference'}</div>
+                    <p style={{ fontSize: '0.78rem', color: 'rgba(245,232,200,0.35)', lineHeight: 1.6, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{a.description}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+      </div>
 
-        {/* Global Footer Navigation */}
-        <div className="pt-20 flex justify-center">
-          <button
-            onClick={() => router.push('/')}
-            className="group flex items-center space-x-4 px-8 py-4 bg-dark-800 hover:bg-cyber-blue transition-all rounded-2xl border border-dark-700 text-white font-bold"
-          >
-            <ArrowLeftIcon className="w-5 h-5 group-hover:-translate-x-2 transition-transform" />
-            <span>RETURN TO ARCHIVE SEARCH</span>
-          </button>
-        </div>
+      {/* Back */}
+      <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid rgba(200,160,80,0.08)' }}>
+        <button onClick={() => router.push('/')} style={{ ...TOKEN, padding: '0.75rem 1.5rem', background: 'transparent', border: '1px solid rgba(245,232,200,0.1)', borderRadius: '3px', color: 'rgba(245,232,200,0.4)', cursor: 'pointer', transition: 'all 0.18s' }}
+          onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(200,160,80,0.35)'; e.currentTarget.style.color = '#ffd080' }}
+          onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(245,232,200,0.1)'; e.currentTarget.style.color = 'rgba(245,232,200,0.4)' }}
+        >← Return to Archive</button>
       </div>
     </div>
   )

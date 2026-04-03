@@ -1,200 +1,221 @@
 import Head from 'next/head'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
 import { api } from '../lib/api'
+
+const S = {
+  page: {
+    minHeight: '100vh', background: '#000',
+    display: 'flex', alignItems: 'stretch',
+    fontFamily: "'Playfair Display', Georgia, serif",
+    color: '#f5e8c8',
+  },
+  left: {
+    flex: 1, display: 'flex', flexDirection: 'column',
+    justifyContent: 'center', padding: '4rem 5rem',
+    position: 'relative', overflow: 'hidden',
+  },
+  right: {
+    width: '480px', background: 'rgba(12,11,20,0.95)',
+    borderLeft: '1px solid rgba(200,160,80,0.1)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '3rem',
+  },
+}
+
+const FIGURES = [
+  { glyph: '𓂀', name: 'Leonardo da Vinci', era: '1452 – 1519' },
+  { glyph: '𓆙', name: 'Cleopatra VII', era: '69 – 30 BC' },
+  { glyph: '𓇌', name: 'Napoleon Bonaparte', era: '1769 – 1821' },
+]
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true)
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    username: ''
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [status, setStatus] = useState({ type: '', text: '' })
+  const [form, setForm] = useState({ email: '', password: '', username: '', confirmPassword: '' })
+  const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState(null)
+
+  const handleChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }))
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setIsLoading(true)
-    setStatus({ type: '', text: '' })
-
-    if (!isLogin && formData.password !== formData.confirmPassword) {
-      setStatus({ type: 'error', text: 'Passwords do not match' })
-      setIsLoading(false)
+    if (!isLogin && form.password !== form.confirmPassword) {
+      setStatus({ ok: false, text: 'Passwords do not match.' })
       return
     }
-
+    setLoading(true); setStatus(null)
     try {
       const endpoint = isLogin ? '/auth/login' : '/auth/register'
       const payload = isLogin
-        ? { username: formData.username || formData.email, password: formData.password }
-        : { email: formData.email, password: formData.password, username: formData.username }
-
+        ? { username: form.email, password: form.password }
+        : { email: form.email, password: form.password, username: form.username }
       const data = await api.post(endpoint, payload)
-
       if (isLogin) {
         localStorage.setItem('token', data.access_token)
-        setStatus({ type: 'success', text: 'Authentication successful. Synchronizing session...' })
+        setStatus({ ok: true, text: 'Access granted. Entering archive...' })
         setTimeout(() => window.location.href = '/explore', 1200)
       } else {
-        setStatus({ type: 'success', text: 'Account created. Transitioning to login...' })
+        setStatus({ ok: true, text: 'Identity created. Proceed to sign in.' })
         setTimeout(() => setIsLogin(true), 1500)
       }
-    } catch (error) {
-      setStatus({ type: 'error', text: error.message || 'Identity verification failed.' })
+    } catch (err) {
+      setStatus({ ok: false, text: err.message || 'Authentication failed.' })
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const handleInputChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
-  }
-
   return (
-    <div className="min-h-screen bg-dark-900 text-white selection:bg-cyber-blue selection:text-white">
-      <Head>
-        <title>{isLogin ? 'Login' : 'Sign Up'} | Echoes of History Archive</title>
-      </Head>
+    <div style={S.page}>
+      <Head><title>{isLogin ? 'Sign In' : 'Register'} — Echoes of History</title></Head>
 
-      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyber-blue blur-[120px] rounded-full" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyber-purple blur-[120px] rounded-full" />
+      {/* Left — decorative */}
+      <div style={S.left}>
+        {/* Radial glow */}
+        <div style={{ position: 'absolute', top: '20%', left: '30%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(200,160,80,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        <Link href="/" style={{ textDecoration: 'none', marginBottom: '4rem', display: 'inline-block' }}>
+          <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontStyle: 'italic', fontSize: '1.25rem', color: '#f5e8c8', borderBottom: '1px solid rgba(200,160,80,0.4)', paddingBottom: '2px' }}>Echoes</span>
+        </Link>
+
+        <p style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(200,160,80,0.5)', marginBottom: '1.5rem' }}>
+          The Human Archive
+        </p>
+
+        <h1 style={{ fontSize: 'clamp(2.5rem,5vw,4.5rem)', fontWeight: 700, lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: '1.5rem', maxWidth: '480px' }}>
+          Five thousand years<br />
+          <span style={{ background: 'linear-gradient(135deg,#ffd080,#c8903a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            await you.
+          </span>
+        </h1>
+
+        <p style={{ fontSize: '1rem', color: 'rgba(245,232,200,0.45)', lineHeight: 1.8, maxWidth: '380px', fontStyle: 'italic', marginBottom: '3rem' }}>
+          Create an identity to save your discoveries, converse with historical figures, and navigate the full archive.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {FIGURES.map(f => (
+            <div key={f.name} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.875rem 1.25rem', border: '1px solid rgba(200,160,80,0.1)', borderRadius: '4px', background: 'rgba(200,160,80,0.03)' }}>
+              <span style={{ fontSize: '1.5rem', opacity: 0.7 }}>{f.glyph}</span>
+              <div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#f5e8c8' }}>{f.name}</div>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', color: 'rgba(200,160,80,0.45)', marginTop: '2px' }}>{f.era}</div>
+              </div>
+            </div>
+          ))}
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', color: 'rgba(245,232,200,0.2)', paddingLeft: '0.25rem' }}>
+            + 12,000 more figures
+          </div>
+        </div>
       </div>
 
-      <nav className="relative z-50 p-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/">
-            <motion.div whileHover={{ scale: 1.05 }} className="flex items-center space-x-3 cursor-pointer group">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyber-blue to-cyber-purple rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-cyber-blue/40 transition-all">
-                <span className="text-white font-black">E</span>
-              </div>
-              <h1 className="text-2xl font-black tracking-tighter uppercase italic">Echoes</h1>
-            </motion.div>
-          </Link>
-        </div>
-      </nav>
+      {/* Right — form */}
+      <div style={S.right}>
+        <div style={{ width: '100%', maxWidth: '360px' }}>
 
-      <div className="flex items-center justify-center p-6 sm:py-24 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md bg-dark-800/50 backdrop-blur-2xl p-10 rounded-[2.5rem] border border-dark-700 shadow-2xl space-y-8"
-        >
-          <div className="text-center space-y-2">
-            <h2 className="text-3xl font-black tracking-tight uppercase">
-              {isLogin ? 'Archive Access' : 'Create Identity'}
-            </h2>
-            <p className="text-gray-500 text-sm font-medium">Enter your credentials to access the historical uplink.</p>
+          {/* Tab toggle */}
+          <div style={{ display: 'flex', marginBottom: '2.5rem', borderBottom: '1px solid rgba(200,160,80,0.12)' }}>
+            {['Sign In', 'Register'].map((label, i) => {
+              const active = (i === 0) === isLogin
+              return (
+                <button key={label} onClick={() => setIsLogin(i === 0)} style={{
+                  flex: 1, padding: '0.875rem', background: 'none', border: 'none',
+                  fontFamily: "'Space Mono', monospace", fontSize: '10px',
+                  letterSpacing: '0.25em', textTransform: 'uppercase',
+                  color: active ? '#ffd080' : 'rgba(245,232,200,0.3)',
+                  borderBottom: active ? '1px solid #ffd080' : '1px solid transparent',
+                  marginBottom: '-1px', cursor: 'pointer', transition: 'all 0.15s',
+                }}>{label}</button>
+              )
+            })}
           </div>
 
-          <div className="flex bg-dark-900/50 p-1.5 rounded-2xl border border-dark-700">
-            <button
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-3 rounded-xl text-xs font-black tracking-widest uppercase transition-all ${isLogin ? 'bg-cyber-blue text-white shadow-xl' : 'text-gray-500 hover:text-white'
-                }`}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-3 rounded-xl text-xs font-black tracking-widest uppercase transition-all ${!isLogin ? 'bg-cyber-blue text-white shadow-xl' : 'text-gray-500 hover:text-white'
-                }`}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <AnimatePresence mode="wait">
-              {!isLogin && (
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                  <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 px-1">Username</label>
-                  <input
-                    type="text"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    required={!isLogin}
-                    className="w-full px-5 py-4 bg-dark-900 border border-dark-700 rounded-2xl text-white outline-none focus:border-cyber-blue focus:ring-4 focus:ring-cyber-blue/10 transition-all placeholder:text-gray-700"
-                    placeholder="IDENT_USER_01"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div>
-              <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 px-1">Email Address</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                className="w-full px-5 py-4 bg-dark-900 border border-dark-700 rounded-2xl text-white outline-none focus:border-cyber-blue focus:ring-4 focus:ring-cyber-blue/10 transition-all placeholder:text-gray-700"
-                placeholder="uplink@echoes.io"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 px-1">Cipher Key</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                required
-                className="w-full px-5 py-4 bg-dark-900 border border-dark-700 rounded-2xl text-white outline-none focus:border-cyber-blue focus:ring-4 focus:ring-cyber-blue/10 transition-all placeholder:text-gray-700"
-                placeholder="••••••••••••"
-              />
-            </div>
-
-            <AnimatePresence>
-              {!isLogin && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                  <label className="block text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 px-1">Re-enter Key</label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    required={!isLogin}
-                    className="w-full px-5 py-4 bg-dark-900 border border-dark-700 rounded-2xl text-white outline-none focus:border-cyber-blue focus:ring-4 focus:ring-cyber-blue/10 transition-all"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {status.text && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`p-4 rounded-xl text-xs font-bold ${status.type === 'success' ? 'bg-cyber-blue/10 text-cyber-blue border border-cyber-blue/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                }`}>
-                {status.text}
-              </motion.div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {!isLogin && (
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(200,160,80,0.55)' }}>Username</span>
+                <input name="username" type="text" value={form.username} onChange={handleChange} required={!isLogin}
+                  placeholder="your_name" style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+              </label>
             )}
 
-            <motion.button
-              type="submit"
-              disabled={isLoading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full py-4 bg-gradient-to-r from-cyber-blue to-cyber-purple text-white font-black tracking-widest uppercase rounded-2xl shadow-xl shadow-cyber-blue/20 hover:shadow-cyber-blue/40 transition-all disabled:opacity-50"
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(200,160,80,0.55)' }}>Email</span>
+              <input name="email" type="email" value={form.email} onChange={handleChange} required
+                placeholder="you@example.com" style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+            </label>
+
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(200,160,80,0.55)' }}>Password</span>
+              <input name="password" type="password" value={form.password} onChange={handleChange} required
+                placeholder="••••••••" style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+            </label>
+
+            {!isLogin && (
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(200,160,80,0.55)' }}>Confirm Password</span>
+                <input name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} required={!isLogin}
+                  placeholder="••••••••" style={inputStyle} onFocus={onFocus} onBlur={onBlur} />
+              </label>
+            )}
+
+            {status && (
+              <div style={{
+                padding: '0.75rem 1rem', borderRadius: '3px', fontSize: '0.8rem',
+                background: status.ok ? 'rgba(200,160,80,0.08)' : 'rgba(200,60,60,0.08)',
+                border: `1px solid ${status.ok ? 'rgba(200,160,80,0.3)' : 'rgba(200,60,60,0.3)'}`,
+                color: status.ok ? '#ffd080' : '#f08080',
+                fontFamily: "'Space Mono', monospace", fontSize: '11px',
+              }}>{status.text}</div>
+            )}
+
+            <button type="submit" disabled={loading} style={{
+              marginTop: '0.5rem', padding: '0.9rem',
+              background: loading ? 'rgba(200,160,80,0.05)' : 'rgba(200,160,80,0.1)',
+              border: '1px solid rgba(200,160,80,0.4)',
+              borderRadius: '3px', color: '#ffd080',
+              fontFamily: "'Space Mono', monospace", fontSize: '11px',
+              letterSpacing: '0.2em', textTransform: 'uppercase',
+              cursor: loading ? 'default' : 'pointer',
+              transition: 'all 0.18s', opacity: loading ? 0.6 : 1,
+            }}
+              onMouseOver={e => { if (!loading) { e.currentTarget.style.background = 'rgba(200,160,80,0.2)'; e.currentTarget.style.borderColor = 'rgba(200,160,80,0.65)' } }}
+              onMouseOut={e => { e.currentTarget.style.background = 'rgba(200,160,80,0.1)'; e.currentTarget.style.borderColor = 'rgba(200,160,80,0.4)' }}
             >
-              {isLoading ? (
-                <div className="flex items-center justify-center space-x-3">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Verifying...</span>
-                </div>
-              ) : (isLogin ? 'Authorize Access' : 'Register Identity')}
-            </motion.button>
+              {loading ? 'Verifying...' : (isLogin ? 'Enter Archive' : 'Create Identity')}
+            </button>
           </form>
 
-          <p className="text-center text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-            {isLogin ? "Legacy account? Contact the administrator." : "By registering, you agree to the historical preservation protocols."}
+          <p style={{ marginTop: '2rem', fontFamily: "'Space Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(245,232,200,0.2)', textAlign: 'center' }}>
+            {isLogin ? (
+              <span>No account? <span style={{ color: 'rgba(200,160,80,0.5)', cursor: 'pointer' }} onClick={() => setIsLogin(false)}>Register here</span></span>
+            ) : (
+              <span>Have an account? <span style={{ color: 'rgba(200,160,80,0.5)', cursor: 'pointer' }} onClick={() => setIsLogin(true)}>Sign in</span></span>
+            )}
           </p>
-        </motion.div>
+        </div>
       </div>
+
+      <style>{`
+        @keyframes ehFadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        input::placeholder { color: rgba(245,232,200,0.2) !important; }
+        @media (max-width: 768px) {
+          .auth-left { display: none !important; }
+          .auth-right { width: 100% !important; min-height: 100vh; }
+        }
+      `}</style>
     </div>
   )
 }
+
+const inputStyle = {
+  width: '100%', padding: '0.875rem 1rem',
+  background: 'rgba(245,232,200,0.03)',
+  border: '1px solid rgba(200,160,80,0.2)',
+  borderRadius: '3px', color: '#f5e8c8',
+  fontFamily: "'Playfair Display', serif", fontSize: '0.9rem',
+  outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+  boxSizing: 'border-box',
+}
+const onFocus = e => { e.target.style.borderColor = 'rgba(200,160,80,0.6)'; e.target.style.boxShadow = '0 0 20px rgba(200,160,80,0.08)' }
+const onBlur  = e => { e.target.style.borderColor = 'rgba(200,160,80,0.2)'; e.target.style.boxShadow = 'none' }

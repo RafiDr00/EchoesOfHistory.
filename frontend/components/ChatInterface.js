@@ -2,217 +2,171 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { api } from '../lib/api'
 
-export default function ChatInterface({ darkMode = false }) {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      type: 'assistant',
-      content: 'Greetings! I am Leonardo da Vinci. I was a man of many curiosities—art, science, engineering, and the mysteries of nature. What shall we explore together?',
-      figure: 'Leonardo da Vinci',
-      timestamp: new Date()
-    }
-  ])
-  const [inputMessage, setInputMessage] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [selectedFigure, setSelectedFigure] = useState('Leonardo da Vinci')
-  const messagesEndRef = useRef(null)
+const FIGURES = [
+  'Leonardo da Vinci', 'Cleopatra VII', 'Napoleon Bonaparte',
+  'Joan of Arc', 'Julius Caesar', 'Marie Curie', 'Albert Einstein',
+]
 
-  const historicalFigures = [
-    'Leonardo da Vinci',
-    'Cleopatra VII',
-    'Napoleon Bonaparte',
-    'Joan of Arc',
-    'Julius Caesar',
-    'Marie Curie',
-    'Albert Einstein'
-  ]
+const TOKEN_STYLE = {
+  fontFamily: "'Space Mono', monospace",
+  fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase',
+}
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+export default function ChatInterface() {
+  const [messages, setMessages] = useState([{
+    id: 1, type: 'assistant',
+    content: 'Greetings. I am Leonardo da Vinci — painter, engineer, and perpetual student of nature. What would you like to explore?',
+    figure: 'Leonardo da Vinci', timestamp: new Date(),
+  }])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [figure, setFigure] = useState('Leonardo da Vinci')
+  const endRef = useRef(null)
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   const sendMessage = async (e) => {
     e.preventDefault()
-    if (!inputMessage.trim() || isLoading) return
-
-    const currentInput = inputMessage.trim()
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      content: currentInput,
-      timestamp: new Date()
-    }
-
-    setMessages(prev => [...prev, userMessage])
-    setInputMessage('')
-    setIsLoading(true)
+    if (!input.trim() || loading) return
+    const text = input.trim()
+    const userMsg = { id: Date.now(), type: 'user', content: text, timestamp: new Date() }
+    setMessages(p => [...p, userMsg])
+    setInput(''); setLoading(true)
 
     try {
-      const data = await api.post('/chat', {
-        figure: selectedFigure,
-        message: currentInput
-      })
+      const data = await api.post('/chat', { figure, message: text })
+      setMessages(p => [...p, {
+        id: Date.now() + 1, type: 'assistant',
+        content: data.response || data.reply || "The threads of time are momentarily tangled.",
+        figure, timestamp: new Date(),
+      }])
+    } catch {
+      setMessages(p => [...p, {
+        id: Date.now() + 1, type: 'assistant',
+        content: "I cannot respond at this moment. The connection has been lost.",
+        figure, timestamp: new Date(), isError: true,
+      }])
+    } finally { setLoading(false) }
+  }
 
-      const assistantMessage = {
-        id: Date.now() + 1,
-        type: 'assistant',
-        content: data.response,
-        figure: selectedFigure,
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, assistantMessage])
-    } catch (error) {
-      console.error('Chat failed:', error)
-      const assistantMessage = {
-        id: Date.now() + 1,
-        type: 'assistant',
-        content: "I apologize, but the threads of time are momentarily tangled. I cannot respond right now.",
-        figure: selectedFigure,
-        timestamp: new Date(),
-        isError: true
-      }
-      setMessages(prev => [...prev, assistantMessage])
-    } finally {
-      setIsLoading(false)
-    }
+  const changeFigure = (f) => {
+    setFigure(f)
+    setMessages([{
+      id: Date.now(), type: 'assistant',
+      content: `I am ${f}. How may I illuminate the past for you?`,
+      figure: f, timestamp: new Date(),
+    }])
   }
 
   return (
-    <div className={`h-full flex flex-col ${darkMode ? 'bg-dark-900' : 'bg-white'} rounded-2xl shadow-2xl overflow-hidden border ${darkMode ? 'border-dark-700' : 'border-gray-100'}`}>
-      {/* Header */}
-      <div className={`p-6 border-b ${darkMode ? 'border-dark-700 bg-dark-800' : 'border-gray-200 bg-gray-50'}`}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-cyber-blue via-cyber-purple to-cyber-pink rounded-xl flex items-center justify-center shadow-lg shadow-cyber-blue/20">
-              <span className="text-white font-bold text-xl">
-                {selectedFigure.charAt(0)}
-              </span>
-            </div>
-            <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {selectedFigure}
-              </h3>
-              <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Historical Accuracy Mode Active
-                </p>
-              </div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontFamily: "'Playfair Display', Georgia, serif" }}>
+
+      {/* Figure selector */}
+      <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid rgba(200,160,80,0.1)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: '180px' }}>
+          <div style={{ width: '36px', height: '36px', background: 'rgba(200,160,80,0.1)', border: '1px solid rgba(200,160,80,0.3)', borderRadius: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', color: '#ffd080', flexShrink: 0 }}>
+            {figure.charAt(0)}
+          </div>
+          <div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#f5e8c8' }}>{figure}</div>
+            <div style={{ ...TOKEN_STYLE, color: 'rgba(200,160,80,0.5)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              Historical Mode
             </div>
           </div>
-
-          <select
-            value={selectedFigure}
-            onChange={(e) => {
-              setSelectedFigure(e.target.value)
-              setMessages([{
-                id: Date.now(),
-                type: 'assistant',
-                content: `Greetings! I am ${e.target.value}. How can I assist you in your historical journey today?`,
-                figure: e.target.value,
-                timestamp: new Date()
-              }])
-            }}
-            className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all focus:ring-2 focus:ring-cyber-blue outline-none ${darkMode
-                ? 'bg-dark-700 border-dark-600 text-white hover:bg-dark-600'
-                : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
-              }`}
-          >
-            {historicalFigures.map(figure => (
-              <option key={figure} value={figure}>{figure}</option>
-            ))}
-          </select>
         </div>
+        <select value={figure} onChange={e => changeFigure(e.target.value)} style={{
+          padding: '0.5rem 0.75rem',
+          background: 'rgba(245,232,200,0.03)',
+          border: '1px solid rgba(200,160,80,0.2)',
+          borderRadius: '3px', color: 'rgba(245,232,200,0.7)',
+          fontFamily: "'Space Mono', monospace", fontSize: '9px',
+          letterSpacing: '0.15em', textTransform: 'uppercase',
+          outline: 'none', cursor: 'pointer',
+        }}>
+          {FIGURES.map(f => <option key={f} value={f} style={{ background: '#0c0b14' }}>{f}</option>)}
+        </select>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-700">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <AnimatePresence initial={false}>
-          {messages.map((message) => (
-            <motion.div
-              key={message.id}
-              initial={{ opacity: 0, x: message.type === 'user' ? 20 : -20, y: 10 }}
-              animate={{ opacity: 1, x: 0, y: 0 }}
-              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`flex max-w-[85%] ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'} items-end gap-3`}>
-                <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold ${message.type === 'user'
-                    ? 'bg-cyber-blue text-white'
-                    : 'bg-dark-700 text-cyber-blue'
-                  }`}>
-                  {message.type === 'user' ? 'U' : message.figure.charAt(0)}
+          {messages.map(msg => (
+            <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              style={{ display: 'flex', justifyContent: msg.type === 'user' ? 'flex-end' : 'flex-start' }}>
+              <div style={{ maxWidth: '82%' }}>
+                <div style={{
+                  padding: '0.875rem 1.1rem',
+                  borderRadius: '3px',
+                  fontSize: '0.875rem', lineHeight: 1.75,
+                  background: msg.type === 'user'
+                    ? 'rgba(200,160,80,0.1)'
+                    : msg.isError
+                      ? 'rgba(200,60,60,0.06)'
+                      : 'rgba(245,232,200,0.04)',
+                  border: msg.type === 'user'
+                    ? '1px solid rgba(200,160,80,0.3)'
+                    : msg.isError
+                      ? '1px solid rgba(200,60,60,0.2)'
+                      : '1px solid rgba(245,232,200,0.06)',
+                  color: msg.type === 'user' ? '#f5e8c8' : msg.isError ? '#f08080' : 'rgba(245,232,200,0.75)',
+                  fontStyle: msg.type === 'assistant' ? 'italic' : 'normal',
+                }}>
+                  {msg.content}
                 </div>
-
-                <div className={`px-5 py-3 rounded-2xl shadow-sm ${message.type === 'user'
-                    ? 'bg-gradient-to-br from-cyber-blue to-cyber-purple text-white rounded-br-none'
-                    : message.isError
-                      ? 'bg-red-500/10 border border-red-500/50 text-red-500'
-                      : darkMode
-                        ? 'bg-dark-800 text-gray-200 border border-dark-700 rounded-bl-none'
-                        : 'bg-gray-100 text-gray-900 rounded-bl-none'
-                  }`}>
-                  <p className="text-sm leading-relaxed">{message.content}</p>
-                  <p className={`text-[10px] mt-2 opacity-60 ${message.type === 'user' ? 'text-right' : 'text-left'
-                    }`}>
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
+                <div style={{ ...TOKEN_STYLE, color: 'rgba(245,232,200,0.2)', marginTop: '4px', textAlign: msg.type === 'user' ? 'right' : 'left' }}>
+                  {msg.type === 'assistant' ? msg.figure : 'You'} · {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
 
-        {isLoading && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-            <div className={`flex items-center space-x-3 px-5 py-3 rounded-2xl ${darkMode ? 'bg-dark-800 border border-dark-700' : 'bg-gray-100'}`}>
-              <div className="flex space-x-1">
-                {[0, 1, 2].map(i => (
-                  <motion.div
-                    key={i}
-                    animate={{ scale: [1, 1.5, 1], opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.1 }}
-                    className="w-1.5 h-1.5 bg-cyber-blue rounded-full"
-                  />
-                ))}
-              </div>
-              <span className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {selectedFigure} is consulting history...
-              </span>
+        {loading && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <div style={{ padding: '0.875rem 1.25rem', border: '1px solid rgba(245,232,200,0.06)', borderRadius: '3px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {[0,1,2].map(i => (
+                <motion.div key={i} animate={{ opacity: [0.2,1,0.2], scaleY: [0.5,1,0.5] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
+                  style={{ width: '3px', height: '12px', background: 'rgba(200,160,80,0.5)', borderRadius: '2px' }} />
+              ))}
+              <span style={{ ...TOKEN_STYLE, color: 'rgba(200,160,80,0.4)', marginLeft: '4px' }}>Composing response</span>
             </div>
           </motion.div>
         )}
-        <div ref={messagesEndRef} />
+        <div ref={endRef} />
       </div>
 
       {/* Input */}
-      <div className={`p-6 border-t ${darkMode ? 'border-dark-700 bg-dark-800/50' : 'border-gray-200 bg-gray-50/50'}`}>
-        <form onSubmit={sendMessage} className="relative group">
+      <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid rgba(200,160,80,0.1)', flexShrink: 0 }}>
+        <form onSubmit={sendMessage} style={{ display: 'flex', gap: '0.75rem' }}>
           <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder={`Ask ${selectedFigure} a question...`}
-            className={`w-full pl-6 pr-16 py-4 rounded-2xl border transition-all outline-none text-sm ${darkMode
-                ? 'bg-dark-900 border-dark-600 text-white placeholder-gray-500 focus:border-cyber-blue/50'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-cyber-blue'
-              } focus:ring-4 focus:ring-cyber-blue/10`}
+            type="text" value={input} onChange={e => setInput(e.target.value)}
+            placeholder={`Ask ${figure.split(' ')[0]}...`}
+            style={{
+              flex: 1, padding: '0.75rem 1rem',
+              background: 'rgba(245,232,200,0.03)',
+              border: '1px solid rgba(200,160,80,0.15)',
+              borderRadius: '3px', color: '#f5e8c8',
+              fontFamily: "'Playfair Display', serif", fontSize: '0.875rem',
+              outline: 'none', transition: 'border-color 0.15s',
+            }}
+            onFocus={e => e.target.style.borderColor = 'rgba(200,160,80,0.5)'}
+            onBlur={e => e.target.style.borderColor = 'rgba(200,160,80,0.15)'}
           />
-          <motion.button
-            type="submit"
-            disabled={!inputMessage.trim() || isLoading}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-gradient-to-r from-cyber-blue to-cyber-purple text-white rounded-xl shadow-lg shadow-cyber-blue/20 disabled:opacity-50 transition-all font-semibold text-xs"
-          >
-            {isLoading ? '...' : 'SEND'}
-          </motion.button>
+          <button type="submit" disabled={!input.trim() || loading} style={{
+            padding: '0.75rem 1.25rem',
+            background: 'rgba(200,160,80,0.1)',
+            border: '1px solid rgba(200,160,80,0.35)',
+            borderRadius: '3px', color: '#ffd080',
+            fontFamily: "'Space Mono', monospace", fontSize: '10px',
+            letterSpacing: '0.15em', textTransform: 'uppercase',
+            cursor: !input.trim() || loading ? 'default' : 'pointer',
+            opacity: !input.trim() || loading ? 0.45 : 1,
+            transition: 'all 0.15s',
+          }}>Send</button>
         </form>
-        <p className={`text-[10px] mt-3 text-center ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-          AI responses are generated based on historical records.
+        <p style={{ ...TOKEN_STYLE, color: 'rgba(245,232,200,0.18)', marginTop: '0.75rem', textAlign: 'center' }}>
+          Responses generated from historical records
         </p>
       </div>
     </div>
