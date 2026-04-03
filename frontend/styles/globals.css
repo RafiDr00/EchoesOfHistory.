@@ -1,5 +1,239 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-parchment }
+/* ── Design Tokens ─────────────────────────────────────────────────── */
+:root {
+  --void:      #000000;
+  --deep:      #05040a;
+  --surface:   #0c0b14;
+  --elevated:  #131220;
+  --border:    rgba(200,160,80,0.12);
+  --border-hi: rgba(200,160,80,0.35);
+
+  --gold:      #ffd080;
+  --gold-dim:  #c8903a;
+  --gold-glow: rgba(200,160,80,0.18);
+
+  --ink:       #f5e8c8;
+  --ink-dim:   rgba(245,232,200,0.55);
+  --ink-muted: rgba(245,232,200,0.28);
+
+  --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --mono:  'Space Mono', 'Courier New', monospace;
+
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+body {
+  background: var(--void);
+  color: var(--ink);
+  font-family: var(--serif);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::selection { background: rgba(200,160,80,0.25); color: var(--gold); }
+
+/* ── Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: rgba(200,160,80,0.2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(200,160,80,0.4); }
+
+/* ── Typography ────────────────────────────────────────────────────── */
+.eh-display {
+  font-family: var(--serif);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.eh-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.eh-gold { color: var(--gold); }
+.eh-gold-text {
+  background: linear-gradient(135deg, #ffd080, #c8903a, #ffd080);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────── */
+.eh-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top-color: rgba(200,160,80,0.18);
+  border-radius: 4px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.eh-card:hover {
+  border-color: var(--border-hi);
+  box-shadow: 0 0 40px var(--gold-glow);
+}
+
+/* ── Inputs ────────────────────────────────────────────────────────── */
+.eh-input {
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  background: rgba(245,232,200,0.03);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.eh-input:focus {
+  border-color: var(--border-hi);
+  box-shadow: 0 0 24px var(--gold-glow);
+}
+
+.eh-input::placeholder { color: var(--ink-muted); }
+
+/* ── Buttons ───────────────────────────────────────────────────────── */
+.eh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.18s;
+  border: none;
+  outline: none;
+}
+
+.eh-btn-primary {
+  background: rgba(200,160,80,0.1);
+  border: 1px solid var(--border-hi);
+  color: var(--gold);
+}
+.eh-btn-primary:hover {
+  background: rgba(200,160,80,0.2);
+  box-shadow: 0 0 24px var(--gold-glow);
+}
+
+.eh-btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(245,232,200,0.1);
+  color: var(--ink-dim);
+}
+.eh-btn-ghost:hover {
+  border-color: var(--border);
+  color: var(--ink);
+  background: rgba(245,232,200,0.04);
+}
+
+/* ── Dividers ──────────────────────────────────────────────────────── */
+.eh-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+/* ── Animations ────────────────────────────────────────────────────── */
+@keyframes ehFadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ehFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes ehGlow {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+.animate-eh-up   { animation: ehFadeUp  0.8s var(--ease-out-expo) both; }
+.animate-eh-in   { animation: ehFadeIn  0.8s ease both; }
+.animate-eh-glow { animation: ehGlow    3s ease-in-out infinite; }
+
+/* ── Nav ────────────────────────────────────────────────────────────── */
+.eh-nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 1.5rem 2.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background 0.4s, backdrop-filter 0.4s, border-color 0.4s;
+}
+
+.eh-nav.scrolled {
+  background: rgba(5,4,10,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 2.5rem;
+}
+
+/* ── Section padding ─────────────────────────────────────────────── */
+.eh-section { padding: 7rem 2rem; }
+.eh-container { max-width: 1120px; margin: 0 auto; }
+
+/* ── Search results ─────────────────────────────────────────────── */
+.eh-result-card {
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top-color: rgba(200,160,80,0.15);
+  border-radius: 4px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.eh-result-card:hover {
+  border-color: var(--border-hi);
+  background: var(--elevated);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+
+/* ── Chat bubble ─────────────────────────────────────────────────── */
+.eh-chat-bubble {
+  padding: 1rem 1.25rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+.eh-chat-user {
+  background: rgba(200,160,80,0.08);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  margin-left: 3rem;
+}
+.eh-chat-assistant {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink-dim);
+  margin-right: 3rem;
+}
+
+/* ── Prose ───────────────────────────────────────────────────────── */
+.eh-prose { font-size: 1rem; line-height: 1.85; color: var(--ink-dim); }
+.eh-prose strong { color: var(--ink); font-weight: 600; }
+.eh-prose em { font-style: italic; color: var(--gold-dim); }
+
+/* ── Custom scrollbar for panels ────────────────────────────────── */
+.eh-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200,160,80,0.15) transparent;
+}

@@ -28,3 +28,4 @@ alembic/versions/*.pyc
 .idea/
 *.swp
 *.swo
+frontend/.env.local
