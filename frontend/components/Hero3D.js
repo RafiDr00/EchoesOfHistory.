@@ -63,7 +63,7 @@ export default function Hero3D({ onSearch, onCinematicSearch }) {
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(45, W() / H(), 0.1, 1000)
-    camera.position.set(0, 0, 3.2)
+    camera.position.set(0.6, 0, 3.2)
 
     // Lights
     scene.add(new THREE.AmbientLight(0xfff5e0, 0.4))

@@ -76,12 +76,16 @@ export default function Home() {
       <nav className={`eh-nav${scrolled ? ' scrolled' : ''}`}>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-            <div style={{
-              width: '32px', height: '32px', border: '1px solid rgba(200,160,80,0.4)',
-              borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '16px', color: '#ffd080',
-            }}>𓂀</div>
-            <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: '1.1rem', letterSpacing: '-0.01em', color: '#f5e8c8' }}>
+            <span style={{
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 700,
+              fontStyle: 'italic',
+              fontSize: '1.25rem',
+              letterSpacing: '0.01em',
+              color: '#f5e8c8',
+              borderBottom: '1px solid rgba(200,160,80,0.4)',
+              paddingBottom: '2px',
+            }}>
               Echoes
             </span>
           </div>
